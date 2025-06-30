@@ -2,21 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { assets, menuLinks } from '../assets/assets';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiSearch, FiX, FiUser, FiLogOut, FiLogIn, FiGrid } from 'react-icons/fi';
+import { SignIn, SignUp, useUser, useClerk } from '@clerk/clerk-react';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // État de connexion simulé
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [showSignIn, setShowSignIn] = useState(false);
+  const [showSignUp, setShowSignUp] = useState(false);
+  const { user } = useUser();
+  const { signOut } = useClerk();
   const navigate = useNavigate();
-
-  // Simulation d'authentification - à remplacer par votre logique réelle
-  useEffect(() => {
-    // Vérifier si un token existe dans le localStorage
-    const token = localStorage.getItem('authToken');
-    setIsLoggedIn(!!token);
-  }, []);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   
@@ -29,19 +26,16 @@ const Navbar = () => {
     }
   };
 
-  const handleLogin = () => {
-    // Simuler une connexion
-    localStorage.setItem('authToken', 'simulated_token');
-    setIsLoggedIn(true);
+
+
+  const handleRegister = () => {
+    setShowSignUp(true);
     setUserMenuOpen(false);
     setIsMenuOpen(false);
-    navigate('/');
   };
 
   const handleLogout = () => {
-    // Simuler une déconnexion
-    localStorage.removeItem('authToken');
-    setIsLoggedIn(false);
+    signOut();
     setUserMenuOpen(false);
     setIsMenuOpen(false);
     navigate('/');
@@ -119,17 +113,16 @@ const Navbar = () => {
             ))}
             
             {/* État utilisateur - Desktop */}
-            {isLoggedIn ? (
-              <div className="relative ml-3">
+            {user ? (
+              <div className="relative ml-3 flex items-center">
+                <img src={user.imageUrl} alt="avatar" className="w-8 h-8 rounded-full border-2 border-indigo-500" />
+                <span className="ml-2 font-medium text-gray-800">{user.firstName}</span>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-indigo-600 focus:outline-none"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-indigo-600 focus:outline-none ml-2"
                 >
-                  <div className="bg-gray-200 border-2 border-dashed rounded-xl w-8 h-8 flex items-center justify-center">
-                    <FiUser className="text-gray-600" />
-                  </div>
+                  <FiUser className="text-gray-600" />
                 </button>
-                
                 {/* Menu déroulant utilisateur */}
                 {userMenuOpen && (
                   <div 
@@ -155,13 +148,16 @@ const Navbar = () => {
                 )}
               </div>
             ) : (
-              <button
-                onClick={handleLogin}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center"
-              >
-                <FiLogIn className="mr-1.5" />
-                Connexion
-              </button>
+              <>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center"
+                >
+                  <FiLogIn className="mr-1.5" />
+                  Connexion
+                </button>
+               
+              </>
             )}
           </div>
 
@@ -177,7 +173,7 @@ const Navbar = () => {
             </button>
             
             {/* Bouton utilisateur/connexion mobile */}
-            {isLoggedIn ? (
+            {user ? (
               <button
                 onClick={() => setIsMenuOpen(true)}
                 className="p-2 text-gray-500 hover:text-gray-700"
@@ -189,7 +185,7 @@ const Navbar = () => {
               </button>
             ) : (
               <button
-                onClick={handleLogin}
+                onClick={() => navigate('/login')}
                 className="p-2 text-gray-500 hover:text-gray-700"
                 aria-label="Connexion"
               >
@@ -262,7 +258,7 @@ const Navbar = () => {
 
           {/* Section utilisateur mobile */}
           <div className="border-t pt-3">
-            {isLoggedIn ? (
+            {user ? (
               <>
                 <Link
                   to="/owner"
@@ -281,17 +277,89 @@ const Navbar = () => {
                 </button>
               </>
             ) : (
-              <button
-                onClick={handleLogin}
-                className="w-full flex items-center px-3 py-3 rounded-lg text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50"
-              >
-                <FiLogIn className="mr-3" />
-                Connexion
-              </button>
+              <>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="w-full flex items-center px-3 py-3 rounded-lg text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50"
+                >
+                  <FiLogIn className="mr-3" />
+                  Connexion
+                </button>
+                <button
+                  onClick={handleRegister}
+                  className="ml-2 w-full flex items-center px-3 py-3 rounded-lg text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50"
+                >
+                  S'inscrire
+                </button>
+              </>
             )}
           </div>
         </div>
       </div>
+
+      {/* Clerk Modals */}
+      {showSignIn && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div
+            className="bg-white rounded-xl shadow-lg p-6 relative flex items-center justify-center w-[380px] min-h-[480px] max-w-full"
+            style={{ minWidth: 380, minHeight: 480 }}
+          >
+            <button onClick={() => setShowSignIn(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl">&times;</button>
+            <SignIn
+              routing="virtual"
+              path="/sign-in"
+              afterSignInUrl="/"
+              afterSignUpUrl="/"
+              signUpUrl="#"
+              appearance={{
+                elements: {
+                  footerAction: {
+                    cursor: 'pointer',
+                  },
+                  card: {
+                    minWidth: '340px',
+                    minHeight: '420px',
+                  },
+                },
+              }}
+              footerAction={() => (
+                <div className="text-center mt-4 text-sm">
+                  Pas de compte ?{' '}
+                  <span
+                    className="text-indigo-600 hover:underline cursor-pointer"
+                    onClick={() => {
+                      setShowSignIn(false);
+                      setShowSignUp(true);
+                    }}
+                  >
+                    S'inscrire
+                  </span>
+                </div>
+              )}
+            />
+          </div>
+        </div>
+      )}
+      {showSignUp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div
+            className="bg-white rounded-xl shadow-lg p-6 relative flex items-center justify-center w-[380px] min-h-[480px] max-w-full"
+            style={{ minWidth: 380, minHeight: 480 }}
+          >
+            <button onClick={() => setShowSignUp(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl">&times;</button>
+            <SignUp routing="virtual" path="/sign-up" afterSignUpUrl="/"
+              appearance={{
+                elements: {
+                  card: {
+                    minWidth: '340px',
+                    minHeight: '420px',
+                  },
+                },
+              }}
+            />
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

@@ -30,7 +30,12 @@ const CarDetails = () => {
             </ul>
           </div>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-8 py-3 font-semibold text-base mx-auto block transition-colors">Réserver</button>
+        <button 
+          className={`bg-blue-600 hover:bg-blue-700 text-white rounded-md px-8 py-3 font-semibold text-base mx-auto block transition-colors ${!car.isAvaliable ? 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300' : ''}`}
+          disabled={!car.isAvaliable}
+        >
+          Réserver
+        </button>
       </div>
       <Footer />
     </div>

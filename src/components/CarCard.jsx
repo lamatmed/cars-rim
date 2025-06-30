@@ -53,7 +53,10 @@ const CarCard = ({ car }) => {
             <span className="font-semibold">4.8</span>
             <span className="text-gray-500 ml-1">(128 avis)</span>
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-300">
+          <button 
+            className={`font-medium py-2 px-4 rounded-lg transition-colors duration-300 ${car.isAvaliable ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+            disabled={!car.isAvaliable}
+          >
             Réserver
           </button>
         </div>

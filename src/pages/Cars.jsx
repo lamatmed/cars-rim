@@ -10,7 +10,7 @@ const Cars = () => {
       <div className="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
         <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">Nos Voitures Disponibles</h2>
         <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {dummyCarData.map(car => (
+          {dummyCarData.filter(car => car.isAvaliable).map(car => (
             <div key={car._id} className="bg-white rounded-xl shadow-md flex flex-col overflow-hidden hover:scale-[1.02] transition-transform">
               <img src={car.image} alt={car.brand + ' ' + car.model} className="w-full h-44 object-cover" />
               <div className="p-4 flex flex-col flex-1 justify-between">
