@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { assets, dummyCarData, dummyMyBookingsData, ownerMenuLinks } from '../assets/assets';
 
 const getDashboardData = () => {
@@ -21,6 +21,40 @@ const getDashboardData = () => {
 
 const OwnerPage = () => {
   const dashboard = getDashboardData();
+  // Récupérer l'utilisateur connecté depuis localStorage
+  const user = JSON.parse(localStorage.getItem('user'));
+
+  // Formulaire d'ajout de voiture (admin seulement)
+  const [carForm, setCarForm] = useState({
+    brand: '', model: '', year: '', category: '', seating_capacity: '', fuel_type: '', transmission: '', pricePerDay: '', location: '', description: '', image: ''
+  });
+  const [carError, setCarError] = useState('');
+  const [carSuccess, setCarSuccess] = useState('');
+  const [showCarForm, setShowCarForm] = useState(false);
+
+  const handleCarChange = e => setCarForm({ ...carForm, [e.target.name]: e.target.value });
+
+  const handleCarSubmit = async (e) => {
+    e.preventDefault();
+    setCarError('');
+    setCarSuccess('');
+    try {
+      const api = import.meta.env.VITE_API;
+      const res = await fetch(`${api}/api/cars`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...carForm, owner: user._id })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur');
+      setCarSuccess('Voiture ajoutée avec succès !');
+      setCarForm({ brand: '', model: '', year: '', category: '', seating_capacity: '', fuel_type: '', transmission: '', pricePerDay: '', location: '', description: '', image: '' });
+      setShowCarForm(false);
+    } catch (err) {
+      setCarError(err.message);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
       {/* Sidebar / Topbar Responsive */}
@@ -44,8 +78,50 @@ const OwnerPage = () => {
 
       {/* Main Content */}
       <main className="flex-1 p-4 md:p-10">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Bienvenue, lamat</h1>
-        <p className="text-gray-600 mb-8">Tableau de bord administrateur</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Bienvenue{user ? `, ${user.firstName} ${user.lastName}` : ''}
+          {user && user.role === 'admin' && (
+            <span className="ml-3 px-3 py-1 rounded bg-gradient-to-r from-indigo-600 to-purple-500 text-white text-sm font-bold align-middle">Admin</span>
+          )}
+        </h1>
+        <p className="text-gray-600 mb-8">Tableau de bord {user && user.role === 'admin' ? 'administrateur' : 'propriétaire'}</p>
+
+        {/* Bouton et formulaire d'ajout de voiture (admin seulement) */}
+        {user && user.role === 'admin' ? (
+          <>
+            <button
+              className="btn-primary mb-4"
+              onClick={() => setShowCarForm(v => !v)}
+            >
+              {showCarForm ? 'Fermer le formulaire' : 'Ajouter une voiture'}
+            </button>
+            {showCarForm && (
+              <form onSubmit={handleCarSubmit} className="bg-white rounded-xl shadow p-6 mb-8">
+                <h2 className="text-xl font-bold mb-4">Ajouter une voiture</h2>
+                {carError && <div className="text-red-500 mb-2">{carError}</div>}
+                {carSuccess && <div className="text-green-600 mb-2">{carSuccess}</div>}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input name="brand" placeholder="Marque" value={carForm.brand} onChange={handleCarChange} className="input" required />
+                  <input name="model" placeholder="Modèle" value={carForm.model} onChange={handleCarChange} className="input" required />
+                  <input name="year" type="number" placeholder="Année" value={carForm.year} onChange={handleCarChange} className="input" required />
+                  <input name="category" placeholder="Catégorie" value={carForm.category} onChange={handleCarChange} className="input" />
+                  <input name="seating_capacity" type="number" placeholder="Places" value={carForm.seating_capacity} onChange={handleCarChange} className="input" />
+                  <input name="fuel_type" placeholder="Carburant" value={carForm.fuel_type} onChange={handleCarChange} className="input" />
+                  <input name="transmission" placeholder="Transmission" value={carForm.transmission} onChange={handleCarChange} className="input" />
+                  <input name="pricePerDay" type="number" placeholder="Prix/jour" value={carForm.pricePerDay} onChange={handleCarChange} className="input" required />
+                  <input name="location" placeholder="Ville" value={carForm.location} onChange={handleCarChange} className="input" />
+                  <input name="image" placeholder="URL image" value={carForm.image} onChange={handleCarChange} className="input" />
+                </div>
+                <textarea name="description" placeholder="Description" value={carForm.description} onChange={handleCarChange} className="input mt-4" />
+                <button type="submit" className="btn-primary mt-4">Ajouter</button>
+              </form>
+            )}
+          </>
+        ) : (
+          <div className="bg-red-100 text-red-700 p-4 rounded-xl mb-8 font-semibold text-center">
+            Vous n'êtes pas autorisé à ajouter une voiture.
+          </div>
+        )}
 
         {/* Statistiques */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6 mb-10">

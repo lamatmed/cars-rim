@@ -123,16 +123,7 @@ const Navbar = () => {
                     className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
                     onMouseLeave={() => setUserMenuOpen(false)}
                   >
-                    {user.role === 'admin' && (
-                      <Link
-                        to="/dashboard"
-                        className="block px-4 py-2 text-sm text-indigo-700 font-bold hover:bg-indigo-50 hover:text-indigo-600 flex items-center"
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        <FiGrid className="mr-2" />
-                        Dashboard
-                      </Link>
-                    )}
+                
                     <Link
                       to="/owner"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center"
@@ -145,7 +136,7 @@ const Navbar = () => {
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center"
                     >
-                      <FiLogOut className="mr-2" />
+                      <FiLogOut className="mr-2 text-red-600" />
                       Déconnexion
                     </button>
                   </div>
@@ -157,7 +148,7 @@ const Navbar = () => {
                   onClick={() => navigate('/login')}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center"
                 >
-                  <FiLogIn className="mr-1.5" />
+                  <FiLogIn className="mr-1.5 text-red-600" />
                   Connexion
                 </button>
               </>
@@ -261,16 +252,7 @@ const Navbar = () => {
           <div className="border-t pt-3">
             {user ? (
               <>
-                {user.role === 'admin' && (
-                  <Link
-                    to="/dashboard"
-                    className="flex items-center px-3 py-3 rounded-lg text-base font-bold text-indigo-700 hover:text-indigo-600 hover:bg-indigo-50"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <FiGrid className="mr-3" />
-                    Dashboard
-                  </Link>
-                )}
+               
                 <div className="flex items-center px-3 py-3">
                   <img src={user.imageUrl || assets.user_profile} alt="avatar" className="w-7 h-7 rounded-full border-2 border-indigo-500 mr-2" />
                   <span className="font-medium text-gray-800">{user.firstName}
@@ -291,7 +273,7 @@ const Navbar = () => {
                   onClick={handleLogout}
                   className="w-full flex items-center px-3 py-3 rounded-lg text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50"
                 >
-                  <FiLogOut className="mr-3" />
+                  <FiLogOut className="mr-3 text-red-600" />
                   Déconnexion
                 </button>
               </>
