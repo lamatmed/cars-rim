@@ -2,21 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { assets, menuLinks } from '../assets/assets';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiSearch, FiX, FiUser, FiLogOut, FiLogIn, FiGrid } from 'react-icons/fi';
-import { SignIn, SignUp, useUser, useClerk } from '@clerk/clerk-react';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [showSignIn, setShowSignIn] = useState(false);
-  const [showSignUp, setShowSignUp] = useState(false);
-  const { user } = useUser();
-  const { signOut } = useClerk();
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem('user');
+    return stored ? JSON.parse(stored) : null;
+  });
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // Met à jour l'utilisateur si localStorage change (ex: login/logout)
+    const syncUser = () => {
+      const stored = localStorage.getItem('user');
+      setUser(stored ? JSON.parse(stored) : null);
+    };
+    window.addEventListener('storage', syncUser);
+    return () => window.removeEventListener('storage', syncUser);
+  }, []);
+
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-  
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -26,32 +35,14 @@ const Navbar = () => {
     }
   };
 
-
-
-  const handleRegister = () => {
-    setShowSignUp(true);
-    setUserMenuOpen(false);
-    setIsMenuOpen(false);
-  };
-
   const handleLogout = () => {
-    signOut();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
     setUserMenuOpen(false);
     setIsMenuOpen(false);
     navigate('/');
   };
-
-  // Fermer les menus quand on redimensionne
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setIsMenuOpen(false);
-      }
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   return (
     <nav className="bg-white shadow-sm fixed w-full z-50">
@@ -111,12 +102,15 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
-            
             {/* État utilisateur - Desktop */}
             {user ? (
               <div className="relative ml-3 flex items-center">
-                <img src={user.imageUrl} alt="avatar" className="w-8 h-8 rounded-full border-2 border-indigo-500" />
-                <span className="ml-2 font-medium text-gray-800">{user.firstName}</span>
+                <img src={user.imageUrl || assets.user_profile} alt="avatar" className="w-8 h-8 rounded-full border-2 border-indigo-500" />
+                <span className="ml-2 font-medium text-gray-800">{user.firstName}
+                  {user.role === 'admin' && (
+                    <span className="ml-2 px-2 py-0.5 rounded bg-gradient-to-r from-indigo-600 to-purple-500 text-white text-xs font-bold align-middle">Admin</span>
+                  )}
+                </span>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center space-x-2 text-gray-700 hover:text-indigo-600 focus:outline-none ml-2"
@@ -129,6 +123,16 @@ const Navbar = () => {
                     className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
                     onMouseLeave={() => setUserMenuOpen(false)}
                   >
+                    {user.role === 'admin' && (
+                      <Link
+                        to="/dashboard"
+                        className="block px-4 py-2 text-sm text-indigo-700 font-bold hover:bg-indigo-50 hover:text-indigo-600 flex items-center"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <FiGrid className="mr-2" />
+                        Dashboard
+                      </Link>
+                    )}
                     <Link
                       to="/owner"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center"
@@ -156,7 +160,6 @@ const Navbar = () => {
                   <FiLogIn className="mr-1.5" />
                   Connexion
                 </button>
-               
               </>
             )}
           </div>
@@ -171,7 +174,6 @@ const Navbar = () => {
             >
               <FiSearch size={20} />
             </button>
-            
             {/* Bouton utilisateur/connexion mobile */}
             {user ? (
               <button
@@ -192,7 +194,6 @@ const Navbar = () => {
                 <FiLogIn size={20} />
               </button>
             )}
-            
             {/* Bouton menu hamburger */}
             <button
               onClick={toggleMenu}
@@ -260,6 +261,24 @@ const Navbar = () => {
           <div className="border-t pt-3">
             {user ? (
               <>
+                {user.role === 'admin' && (
+                  <Link
+                    to="/dashboard"
+                    className="flex items-center px-3 py-3 rounded-lg text-base font-bold text-indigo-700 hover:text-indigo-600 hover:bg-indigo-50"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <FiGrid className="mr-3" />
+                    Dashboard
+                  </Link>
+                )}
+                <div className="flex items-center px-3 py-3">
+                  <img src={user.imageUrl || assets.user_profile} alt="avatar" className="w-7 h-7 rounded-full border-2 border-indigo-500 mr-2" />
+                  <span className="font-medium text-gray-800">{user.firstName}
+                    {user.role === 'admin' && (
+                      <span className="ml-2 px-2 py-0.5 rounded bg-gradient-to-r from-indigo-600 to-purple-500 text-white text-xs font-bold align-middle">Admin</span>
+                    )}
+                  </span>
+                </div>
                 <Link
                   to="/owner"
                   className="flex items-center px-3 py-3 rounded-lg text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50"
@@ -285,81 +304,11 @@ const Navbar = () => {
                   <FiLogIn className="mr-3" />
                   Connexion
                 </button>
-                <button
-                  onClick={handleRegister}
-                  className="ml-2 w-full flex items-center px-3 py-3 rounded-lg text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50"
-                >
-                  S'inscrire
-                </button>
               </>
             )}
           </div>
         </div>
       </div>
-
-      {/* Clerk Modals */}
-      {showSignIn && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div
-            className="bg-white rounded-xl shadow-lg p-6 relative flex items-center justify-center w-[380px] min-h-[480px] max-w-full"
-            style={{ minWidth: 380, minHeight: 480 }}
-          >
-            <button onClick={() => setShowSignIn(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl">&times;</button>
-            <SignIn
-              routing="virtual"
-              path="/sign-in"
-              afterSignInUrl="/"
-              afterSignUpUrl="/"
-              signUpUrl="#"
-              appearance={{
-                elements: {
-                  footerAction: {
-                    cursor: 'pointer',
-                  },
-                  card: {
-                    minWidth: '340px',
-                    minHeight: '420px',
-                  },
-                },
-              }}
-              footerAction={() => (
-                <div className="text-center mt-4 text-sm">
-                  Pas de compte ?{' '}
-                  <span
-                    className="text-indigo-600 hover:underline cursor-pointer"
-                    onClick={() => {
-                      setShowSignIn(false);
-                      setShowSignUp(true);
-                    }}
-                  >
-                    S'inscrire
-                  </span>
-                </div>
-              )}
-            />
-          </div>
-        </div>
-      )}
-      {showSignUp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div
-            className="bg-white rounded-xl shadow-lg p-6 relative flex items-center justify-center w-[380px] min-h-[480px] max-w-full"
-            style={{ minWidth: 380, minHeight: 480 }}
-          >
-            <button onClick={() => setShowSignUp(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl">&times;</button>
-            <SignUp routing="virtual" path="/sign-up" afterSignUpUrl="/"
-              appearance={{
-                elements: {
-                  card: {
-                    minWidth: '340px',
-                    minHeight: '420px',
-                  },
-                },
-              }}
-            />
-          </div>
-        </div>
-      )}
     </nav>
   );
 };
